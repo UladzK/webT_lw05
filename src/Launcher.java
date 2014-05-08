@@ -5,35 +5,23 @@ import generated.Weapons;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Launcher {
 
-    private static Properties property;
 
     public static void main(String[] args) {
 
-        readProperties();
-
-        Connection connection = null;
-
-        String url = property.getProperty("jdbc.databaseurl");
-        String name = property.getProperty("jdbc.username");
-        String password = property.getProperty("jdbc.password");
-
         try {
-
-            Class.forName(property.getProperty("jdbc.driverClassName"));
-            connection = DriverManager.getConnection(url, name, password);
+            Connection connection = DBConnectionPool.getInstance().getConnection();
 
             PreparedStatement statement = connection.prepareStatement("SELECT * FROM WEAPONS");
             ResultSet resultSet = statement.executeQuery();
@@ -43,14 +31,14 @@ public class Launcher {
                 Weapon weapon = new Weapon();
 
                 String serialId = resultSet.getString("serialId");
-                String weap_name = resultSet.getString("name");
+                String weapon_name = resultSet.getString("name");
                 String kind = resultSet.getString("kind");
                 int capacity = resultSet.getInt("holder_capacity");
                 int damage = resultSet.getInt("damage");
                 float caliber = resultSet.getFloat("caliber");
 
                 weapon.setDamage(new BigDecimal(damage));
-                weapon.setName(weap_name);
+                weapon.setName(weapon_name);
                 weapon.setSerialId(serialId);
                 Holder holder = new Holder();
                 holder.setCaliber(caliber);
@@ -70,30 +58,13 @@ public class Launcher {
 
             m.marshal(weapons, new FileOutputStream("generated.xml"));
 
+            DBConnectionPool.getInstance().freeConnection(connection);
         } catch (Exception ex) {
             Logger.getLogger(Launcher.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException ex) {
-                    Logger.getLogger(Launcher.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
+            DBConnectionPool.getInstance().released();
         }
 
     }
 
-
-    private static void readProperties() {
-        FileInputStream fis;
-        property = new Properties();
-
-        try {
-            fis = new FileInputStream("src/resources/jdbc.properties");
-            property.load(fis);
-        } catch (IOException e) {
-            System.err.println("ОШИБКА: Файл свойств отсуствует!");
-        }
-    }
 }
