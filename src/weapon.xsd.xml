@@ -1,0 +1,11 @@
+<weap:Weapons xmlns:weap="http://www.example.com/Weapon">
+  <!--1 or more repetitions:-->
+  <weapon serialId="string" kind="Gun">
+    <name>string</name>
+    <damage>1000.00</damage>
+    <holder>
+      <capacity>100</capacity>
+      <caliber>1.5E2</caliber>
+    </holder>
+  </weapon>
+</weap:Weapons>
